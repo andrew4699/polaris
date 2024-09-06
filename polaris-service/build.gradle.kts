@@ -26,6 +26,7 @@ plugins {
   id("polaris-server")
   id("polaris-license-report")
   id("application")
+  id("java-test-fixtures")
 }
 
 dependencies {
@@ -84,30 +85,31 @@ dependencies {
   implementation("software.amazon.awssdk:iam-policy-builder")
   implementation("software.amazon.awssdk:s3")
 
-  testImplementation("org.apache.iceberg:iceberg-api:${libs.versions.iceberg.get()}:tests")
-  testImplementation("org.apache.iceberg:iceberg-core:${libs.versions.iceberg.get()}:tests")
-  testImplementation("io.dropwizard:dropwizard-testing")
-  testImplementation(platform(libs.testcontainers.bom))
-  testImplementation("org.testcontainers:testcontainers")
-  testImplementation(libs.s3mock.testcontainers)
+  testFixturesImplementation(project(":polaris-service"))
+  testFixturesImplementation(project(":polaris-core"))
+  testFixturesImplementation("org.apache.iceberg:iceberg-api:${libs.versions.iceberg.get()}:tests")
+  testFixturesImplementation("org.apache.iceberg:iceberg-core:${libs.versions.iceberg.get()}:tests")
+  testFixturesImplementation("io.dropwizard:dropwizard-testing")
+  testFixturesImplementation(platform(libs.testcontainers.bom))
+  testFixturesImplementation("org.testcontainers:testcontainers")
+  testFixturesImplementation(libs.s3mock.testcontainers)
 
-  testImplementation("org.apache.iceberg:iceberg-spark-3.5_2.12")
-  testImplementation("org.apache.iceberg:iceberg-spark-extensions-3.5_2.12")
-  testImplementation("org.apache.spark:spark-sql_2.12:3.5.1") {
+  testFixturesImplementation("org.apache.iceberg:iceberg-spark-3.5_2.12")
+  testFixturesImplementation("org.apache.iceberg:iceberg-spark-extensions-3.5_2.12")
+  testFixturesImplementation("org.apache.spark:spark-sql_2.12:3.5.1") {
     // exclude log4j dependencies
     exclude("org.apache.logging.log4j", "log4j-slf4j2-impl")
     exclude("org.apache.logging.log4j", "log4j-api")
     exclude("org.apache.logging.log4j", "log4j-1.2-api")
   }
 
-  testImplementation("software.amazon.awssdk:glue")
-  testImplementation("software.amazon.awssdk:kms")
-  testImplementation("software.amazon.awssdk:dynamodb")
+  testFixturesImplementation("software.amazon.awssdk:glue")
+  testFixturesImplementation("software.amazon.awssdk:kms")
+  testFixturesImplementation("software.amazon.awssdk:dynamodb")
 
-  testImplementation(platform(libs.junit.bom))
-  testImplementation("org.junit.jupiter:junit-jupiter")
-  testImplementation(libs.assertj.core)
-  testImplementation(libs.mockito.core)
+  testFixturesImplementation(platform(libs.junit.bom))
+  testFixturesImplementation("org.junit.jupiter:junit-jupiter")
+  testFixturesImplementation(libs.assertj.core)
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
