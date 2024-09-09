@@ -52,6 +52,10 @@ import org.slf4j.LoggerFactory;
 
 public class PolarisConnectionExtension implements BeforeAllCallback, ParameterResolver {
 
+  // TODO: MOVE THESE
+  public static final String BASE_URL_PROPERTY = "base_url";
+  public static final String API_CLIENT_PROPERTY = "api_client";
+
   public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private MetaStoreManagerFactory metaStoreManagerFactory;
   private DropwizardAppExtension dropwizardAppExtension;
@@ -149,7 +153,7 @@ public class PolarisConnectionExtension implements BeforeAllCallback, ParameterR
       String token =
           TokenUtils.getTokenFromSecrets(
               dropwizardAppExtension.client(),
-              dropwizardAppExtension.getLocalPort(),
+              String.format("http://localhost:%d", dropwizardAppExtension.getLocalPort()),
               adminSecrets.getPrincipalClientId(),
               adminSecrets.getMainSecret(),
               realm);

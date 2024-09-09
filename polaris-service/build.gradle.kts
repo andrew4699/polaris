@@ -31,6 +31,7 @@ plugins {
 
 dependencies {
   implementation(project(":polaris-core"))
+  testFixturesApi(project(":polaris-core"))
 
   implementation(platform(libs.iceberg.bom))
   implementation("org.apache.iceberg:iceberg-api")
@@ -85,32 +86,40 @@ dependencies {
   implementation("software.amazon.awssdk:iam-policy-builder")
   implementation("software.amazon.awssdk:s3")
 
-  testFixturesImplementation(project(":polaris-service"))
-  testFixturesImplementation(project(":polaris-core"))
-  testFixturesImplementation("org.apache.iceberg:iceberg-api:${libs.versions.iceberg.get()}:tests")
-  testFixturesImplementation("org.apache.iceberg:iceberg-core:${libs.versions.iceberg.get()}:tests")
-  testFixturesImplementation("io.dropwizard:dropwizard-testing")
+  testFixturesApi(platform(libs.iceberg.bom))
+  testFixturesApi("org.apache.iceberg:iceberg-api:${libs.versions.iceberg.get()}")
+  testFixturesApi("org.apache.iceberg:iceberg-api:${libs.versions.iceberg.get()}:tests")
+  testFixturesApi("org.apache.iceberg:iceberg-core:${libs.versions.iceberg.get()}")
+  testFixturesApi("org.apache.iceberg:iceberg-core:${libs.versions.iceberg.get()}:tests")
+  testFixturesApi(platform(libs.dropwizard.bom))
+  testFixturesApi("io.dropwizard:dropwizard-testing")
   testFixturesImplementation(platform(libs.testcontainers.bom))
   testFixturesImplementation("org.testcontainers:testcontainers")
-  testFixturesImplementation(libs.s3mock.testcontainers)
+  testFixturesApi(libs.s3mock.testcontainers)
 
-  testFixturesImplementation("org.apache.iceberg:iceberg-spark-3.5_2.12")
-  testFixturesImplementation("org.apache.iceberg:iceberg-spark-extensions-3.5_2.12")
-  testFixturesImplementation("org.apache.spark:spark-sql_2.12:3.5.1") {
+  testFixturesImplementation("org.apache.iceberg:iceberg-spark-3.5_2.12:1.5.2")
+  testFixturesImplementation("org.apache.iceberg:iceberg-spark-extensions-3.5_2.12:1.5.2")
+  testFixturesApi("org.apache.spark:spark-sql_2.12:3.5.1") {
     // exclude log4j dependencies
     exclude("org.apache.logging.log4j", "log4j-slf4j2-impl")
     exclude("org.apache.logging.log4j", "log4j-api")
     exclude("org.apache.logging.log4j", "log4j-1.2-api")
   }
 
+  testFixturesApi(platform(libs.awssdk.bom))
   testFixturesImplementation("software.amazon.awssdk:glue")
   testFixturesImplementation("software.amazon.awssdk:kms")
   testFixturesImplementation("software.amazon.awssdk:dynamodb")
 
-  testFixturesImplementation(platform(libs.junit.bom))
-  testFixturesImplementation("org.junit.jupiter:junit-jupiter")
-  testFixturesImplementation(libs.assertj.core)
+
+  testFixturesApi(platform(libs.junit.bom))
+  testFixturesApi("org.junit.jupiter:junit-jupiter")
+  testFixturesApi(libs.assertj.core)
+  testFixturesApi(libs.mockito.core)
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+  testFixturesRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+
 }
 
 if (project.properties.get("eclipseLink") == "true") {
@@ -212,7 +221,7 @@ tasks.named<Test>("test").configure {
   if (System.getenv("AWS_REGION") == null) {
     environment("AWS_REGION", "us-west-2")
   }
-  jvmArgs("--add-exports", "java.base/sun.nio.ch=ALL-UNNAMED")
+//  jvmArgs("--add-exports", "java.base/sun.nio.ch=ALL-UNNAMED")
   useJUnitPlatform()
   maxParallelForks = 4
 }

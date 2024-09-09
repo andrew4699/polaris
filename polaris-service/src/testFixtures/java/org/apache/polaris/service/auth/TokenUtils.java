@@ -32,19 +32,25 @@ import org.apache.iceberg.rest.responses.OAuthTokenResponse;
 public class TokenUtils {
 
   /** Get token against default realm */
+//  public static String getTokenFromSecrets(
+//      Client client, String baseUrl, String clientId, String clientSecret) {
+//    return getTokenFromSecrets(client, baseUrl, clientId, clientSecret, null);
+//  }
+
+  // TODO: remove this
   public static String getTokenFromSecrets(
-      Client client, int port, String clientId, String clientSecret) {
-    return getTokenFromSecrets(client, port, clientId, clientSecret, null);
+          Client client, int port, String clientId, String clientSecret, String realm) {
+    return getTokenFromSecrets(client, String.format("http://localhost:%d", port), clientId, clientSecret, realm);
   }
 
   /** Get token against specified realm */
   public static String getTokenFromSecrets(
-      Client client, int port, String clientId, String clientSecret, String realm) {
+      Client client, String baseUrl, String clientId, String clientSecret, String realm) {
     String token;
 
     Invocation.Builder builder =
         client
-            .target(String.format("http://localhost:%d/api/catalog/v1/oauth/tokens", port))
+            .target(String.format("%s/api/catalog/v1/oauth/tokens", baseUrl))
             .request("application/json");
     if (realm != null) {
       builder = builder.header(REALM_PROPERTY_KEY, realm);
