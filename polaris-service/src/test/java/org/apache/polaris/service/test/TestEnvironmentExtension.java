@@ -44,11 +44,10 @@ public class TestEnvironmentExtension implements ParameterResolver {
             "Must specify a custom TestEnvironment or have a DropwizardAppExtension");
       }
 
-      TestEnvironment dropwizardEnv = new TestEnvironment();
-      dropwizardEnv.apiClient = dropwizardAppExtension.client();
-      dropwizardEnv.baseUrl =
-          String.format("http://localhost:%d", dropwizardAppExtension.getLocalPort());
-      return dropwizardEnv;
+      return new TestEnvironment(
+              dropwizardAppExtension.client(),
+              String.format("http://localhost:%d", dropwizardAppExtension.getLocalPort())
+      );
     }
     return env;
   }
@@ -65,7 +64,7 @@ public class TestEnvironmentExtension implements ParameterResolver {
       ParameterContext parameterContext, ExtensionContext extensionContext)
       throws ParameterResolutionException {
     try {
-      var baseUrl = Optional.ofNullable(System.getenv("INTEGRATION_TEST_BASE_URL"));
+      var baseUrl = Optional.ofNullable(System.getenv(ENV_BASE_URL));
 
       DropwizardAppExtension dropwizardAppExtension = findDropwizardExtension(extensionContext);
       if (dropwizardAppExtension == null && baseUrl.isEmpty()) {
@@ -73,11 +72,11 @@ public class TestEnvironmentExtension implements ParameterResolver {
             "No test URL specified. Tried to default to Dropwizard but could not find DropwizardAppExtension.");
       }
 
-      env = new TestEnvironment();
-      env.apiClient = getHttpClient(dropwizardAppExtension);
-      env.baseUrl =
-          baseUrl.orElse(
-              String.format("http://localhost:%d", dropwizardAppExtension.getLocalPort()));
+      env = new TestEnvironment(
+              getHttpClient(dropwizardAppExtension),
+              baseUrl.orElse(
+                      String.format("http://localhost:%d", dropwizardAppExtension.getLocalPort()))
+      );
       return env;
     } catch (IllegalAccessException e) {
       throw new ParameterResolutionException(e.getMessage());
@@ -85,7 +84,7 @@ public class TestEnvironmentExtension implements ParameterResolver {
   }
 
   private Client getHttpClient(DropwizardAppExtension dropwizardAppExtension) {
-    var httpClientImpl = Optional.ofNullable(System.getenv("INTEGRATION_TEST_HTTP_CLIENT_IMPL"));
+    var httpClientImpl = Optional.ofNullable(System.getenv(ENV_HTTP_CLIENT_IMPL));
 
     if (httpClientImpl.isEmpty()) {
       if (dropwizardAppExtension == null) {
