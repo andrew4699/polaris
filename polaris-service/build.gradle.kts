@@ -85,6 +85,7 @@ dependencies {
 
   testImplementation("org.apache.iceberg:iceberg-api:${libs.versions.iceberg.get()}:tests")
   testImplementation("org.apache.iceberg:iceberg-core:${libs.versions.iceberg.get()}:tests")
+  testImplementation("org.apache.iceberg:iceberg-common")
   testImplementation("io.dropwizard:dropwizard-testing")
   testImplementation(platform(libs.testcontainers.bom))
   testImplementation("org.testcontainers:testcontainers")
@@ -233,6 +234,7 @@ tasks.named<Jar>("jar") {
 }
 
 tasks.register<Jar>("testJar") {
+  // TODO: make "assemble" run this
   archiveClassifier.set("tests")
   from(sourceSets.test.get().output)
 }
