@@ -56,6 +56,8 @@ import org.apache.polaris.service.test.PolarisConnectionExtension.PolarisToken;
 import org.apache.polaris.service.test.PolarisRealm;
 import org.apache.polaris.service.test.SnowmanCredentialsExtension;
 import org.apache.polaris.service.test.SnowmanCredentialsExtension.SnowmanCredentials;
+import org.apache.polaris.service.test.TestEnvironment;
+import org.apache.polaris.service.test.TestEnvironmentExtension;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -67,6 +69,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
  */
 @ExtendWith({
   DropwizardExtensionsSupport.class,
+  TestEnvironmentExtension.class,
   PolarisConnectionExtension.class,
   SnowmanCredentialsExtension.class
 })
@@ -100,7 +103,8 @@ public class PolarisRestCatalogViewIntegrationTest extends ViewCatalogTests<REST
       TestInfo testInfo,
       PolarisToken adminToken,
       SnowmanCredentials snowmanCredentials,
-      @PolarisRealm String realm) {
+      @PolarisRealm String realm,
+TestEnvironment testEnv) {
     String userToken = adminToken.token();
     testInfo
         .getTestMethod()
@@ -108,11 +112,11 @@ public class PolarisRestCatalogViewIntegrationTest extends ViewCatalogTests<REST
             method -> {
               String catalogName = method.getName();
               try (Response response =
-                  EXT.client()
+                  testEnv.getApiClient()
                       .target(
                           String.format(
-                              "http://localhost:%d/api/management/v1/catalogs/%s",
-                              EXT.getLocalPort(), catalogName))
+                              "%s/api/management/v1/catalogs/%s",
+                              testEnv.getBaseUrl(), catalogName))
                       .request("application/json")
                       .header("Authorization", "Bearer " + userToken)
                       .header(REALM_PROPERTY_KEY, realm)
@@ -158,10 +162,10 @@ public class PolarisRestCatalogViewIntegrationTest extends ViewCatalogTests<REST
                               : awsConfigModel)
                       .build();
               try (Response response =
-                  EXT.client()
+                  testEnv.getApiClient()
                       .target(
                           String.format(
-                              "http://localhost:%d/api/management/v1/catalogs", EXT.getLocalPort()))
+                              "%s/api/management/v1/catalogs", testEnv.getBaseUrl()))
                       .request("application/json")
                       .header("Authorization", "Bearer " + userToken)
                       .header(REALM_PROPERTY_KEY, realm)
@@ -171,11 +175,11 @@ public class PolarisRestCatalogViewIntegrationTest extends ViewCatalogTests<REST
               }
               CatalogRole newRole = new CatalogRole("admin");
               try (Response response =
-                  EXT.client()
+                  testEnv.getApiClient()
                       .target(
                           String.format(
-                              "http://localhost:%d/api/management/v1/catalogs/%s/catalog-roles",
-                              EXT.getLocalPort(), catalogName))
+                              "%s/api/management/v1/catalogs/%s/catalog-roles",
+                              testEnv.getBaseUrl(), catalogName))
                       .request("application/json")
                       .header("Authorization", "Bearer " + userToken)
                       .header(REALM_PROPERTY_KEY, realm)
@@ -187,11 +191,11 @@ public class PolarisRestCatalogViewIntegrationTest extends ViewCatalogTests<REST
                   new CatalogGrant(
                       CatalogPrivilege.CATALOG_MANAGE_CONTENT, GrantResource.TypeEnum.CATALOG);
               try (Response response =
-                  EXT.client()
+                  testEnv.getApiClient()
                       .target(
                           String.format(
-                              "http://localhost:%d/api/management/v1/catalogs/%s/catalog-roles/admin/grants",
-                              EXT.getLocalPort(), catalogName))
+                              "%s/api/management/v1/catalogs/%s/catalog-roles/admin/grants",
+                              testEnv.getBaseUrl(), catalogName))
                       .request("application/json")
                       .header("Authorization", "Bearer " + userToken)
                       .header(REALM_PROPERTY_KEY, realm)
@@ -201,11 +205,11 @@ public class PolarisRestCatalogViewIntegrationTest extends ViewCatalogTests<REST
               }
 
               try (Response response =
-                  EXT.client()
+                  testEnv.getApiClient()
                       .target(
                           String.format(
-                              "http://localhost:%d/api/management/v1/catalogs/%s/catalog-roles/admin",
-                              EXT.getLocalPort(), catalogName))
+                              "%s/api/management/v1/catalogs/%s/catalog-roles/admin",
+                              testEnv.getBaseUrl(), catalogName))
                       .request("application/json")
                       .header("Authorization", "Bearer " + userToken)
                       .header(REALM_PROPERTY_KEY, realm)
@@ -214,11 +218,11 @@ public class PolarisRestCatalogViewIntegrationTest extends ViewCatalogTests<REST
                     .returns(Response.Status.OK.getStatusCode(), Response::getStatus);
                 CatalogRole catalogRole = response.readEntity(CatalogRole.class);
                 try (Response ignore =
-                    EXT.client()
+                    testEnv.getApiClient()
                         .target(
                             String.format(
-                                "http://localhost:%d/api/management/v1/principal-roles/catalog-admin/catalog-roles/%s",
-                                EXT.getLocalPort(), catalogName))
+                                "%s/api/management/v1/principal-roles/catalog-admin/catalog-roles/%s",
+                                testEnv.getBaseUrl(), catalogName))
                         .request("application/json")
                         .header("Authorization", "Bearer " + userToken)
                         .header(REALM_PROPERTY_KEY, realm)
@@ -240,7 +244,7 @@ public class PolarisRestCatalogViewIntegrationTest extends ViewCatalogTests<REST
                   "polaris",
                   ImmutableMap.of(
                       CatalogProperties.URI,
-                      "http://localhost:" + EXT.getLocalPort() + "/api/catalog",
+                      testEnv.getBaseUrl() + "/api/catalog",
                       OAuth2Properties.CREDENTIAL,
                       snowmanCredentials.clientId() + ":" + snowmanCredentials.clientSecret(),
                       OAuth2Properties.SCOPE,
