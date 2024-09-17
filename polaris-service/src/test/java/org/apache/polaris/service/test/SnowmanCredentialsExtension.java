@@ -54,7 +54,7 @@ public class SnowmanCredentialsExtension
     PolarisPrincipalSecrets adminSecrets = PolarisConnectionExtension.getAdminSecrets();
     String realm =
         extensionContext
-            .getStore(Namespace.create(extensionContext.getRequiredTestClass()))
+            .getStore(Namespace.create(PolarisConnectionExtension.getRealm()))
             .get(REALM_PROPERTY_KEY, String.class);
 
     if (adminSecrets == null) {
@@ -160,7 +160,7 @@ public class SnowmanCredentialsExtension
     PolarisPrincipalSecrets adminSecrets = PolarisConnectionExtension.getAdminSecrets();
     String realm =
         extensionContext
-            .getStore(Namespace.create(extensionContext.getRequiredTestClass()))
+            .getStore(Namespace.create(PolarisConnectionExtension.getRealm()))
             .get(REALM_PROPERTY_KEY, String.class);
 
     if (adminSecrets == null) {

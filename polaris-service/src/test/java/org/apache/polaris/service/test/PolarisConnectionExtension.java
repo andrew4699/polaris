@@ -34,6 +34,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
+
 import org.apache.polaris.core.context.CallContext;
 import org.apache.polaris.core.context.RealmContext;
 import org.apache.polaris.core.entity.PolarisEntityConstants;
@@ -69,6 +71,10 @@ public class PolarisConnectionExtension
   private static PolarisPrincipalSecrets adminSecrets;
   private static String realm;
 
+  public static String getRealm() {
+    return realm;
+  }
+
   @Override
   public void beforeAll(ExtensionContext extensionContext) throws Exception {
     dropwizardAppExtension = findDropwizardExtension(extensionContext);
@@ -77,9 +83,9 @@ public class PolarisConnectionExtension
     }
 
     // Generate unique realm using test name for each test since the tests can run in parallel
-    realm = extensionContext.getRequiredTestClass().getName().replace('.', '_');
+    realm = extensionContext.getRequiredTestClass().getName().replace('.', '_') + new Random().nextInt(1000);
     extensionContext
-        .getStore(Namespace.create(extensionContext.getRequiredTestClass()))
+        .getStore(Namespace.create(realm))
         .put(REALM_PROPERTY_KEY, realm);
 
     try {
