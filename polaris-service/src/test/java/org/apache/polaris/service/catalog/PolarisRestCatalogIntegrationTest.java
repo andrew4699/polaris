@@ -131,12 +131,8 @@ public class PolarisRestCatalogIntegrationTest extends CatalogTests<RESTCatalog>
   private RESTCatalog restCatalog;
   private String currentCatalogName;
   private String userToken;
-<<<<<<< HEAD
   private String realm;
-=======
   private TestEnvironment testEnv;
-  private static String realm;
->>>>>>> 43a8521 (migrate 2 tests to TestEnvironmentExtension)
 
   private final String catalogBaseLocation =
       S3_BUCKET_BASE + "/" + System.getenv("USER") + "/path/to/data";
@@ -770,12 +766,11 @@ TestEnvironment testEnv) {
             null));
     restCatalog.createNamespace(Namespace.of("ns1"));
     String notificationUrl =
-        String.format(
-            "http://localhost:%d/api/catalog/v1/%s/namespaces/ns1/tables/tbl1/notifications",
-            EXT.getLocalPort(), currentCatalogName);
+            String.format(
+                    "%s/api/catalog/v1/%s/namespaces/ns1/tables/tbl1/notifications",
+                    testEnv.getBaseUrl(), currentCatalogName);
     try (Response response =
-<<<<<<< HEAD
-        EXT.client()
+        testEnv.getApiClient()
             .target(notificationUrl)
             .request("application/json")
             .header("Authorization", "Bearer " + userToken)
@@ -790,15 +785,8 @@ TestEnvironment testEnv) {
     // NotificationType.VALIDATE should also surface the same error.
     notification.setNotificationType(NotificationType.VALIDATE);
     try (Response response =
-        EXT.client()
-            .target(notificationUrl)
-=======
         testEnv.getApiClient()
-            .target(
-                String.format(
-                    "%s/api/catalog/v1/%s/namespaces/ns1/tables/tbl1/notifications",
-                    testEnv.getBaseUrl(), currentCatalogName))
->>>>>>> 43a8521 (migrate 2 tests to TestEnvironmentExtension)
+            .target(notificationUrl)
             .request("application/json")
             .header("Authorization", "Bearer " + userToken)
             .header(REALM_PROPERTY_KEY, realm)
