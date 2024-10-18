@@ -35,40 +35,13 @@ public class TestEnvironmentExtension implements ParameterResolver {
   private static TestEnvironment env;
 
   public static TestEnvironment getEnv(ExtensionContext extensionContext)
-      throws IllegalAccessException {
+          throws IllegalAccessException {
     if (env == null) {
-      DropwizardAppExtension dropwizardAppExtension = findDropwizardExtension(extensionContext);
-      if (dropwizardAppExtension == null) {
-        throw new RuntimeException(
-            "Must specify a custom TestEnvironment or have a DropwizardAppExtension");
-      }
-
-      return new TestEnvironment(
-              dropwizardAppExtension.client(),
-              String.format("http://localhost:%d", dropwizardAppExtension.getLocalPort())
-      );
-    }
-    return env;
-  }
-
-  @Override
-  public boolean supportsParameter(
-      ParameterContext parameterContext, ExtensionContext extensionContext)
-      throws ParameterResolutionException {
-    return parameterContext.getParameter().getType().equals(TestEnvironment.class);
-  }
-
-  @Override
-  public Object resolveParameter(
-      ParameterContext parameterContext, ExtensionContext extensionContext)
-      throws ParameterResolutionException {
-    try {
-      var baseUrl = Optional.ofNullable(System.getenv(ENV_BASE_URL));
-
+      Optional<String> baseUrl = Optional.ofNullable(System.getenv(ENV_BASE_URL));
       DropwizardAppExtension dropwizardAppExtension = findDropwizardExtension(extensionContext);
       if (dropwizardAppExtension == null && baseUrl.isEmpty()) {
         throw new ParameterResolutionException(
-            "No test URL specified. Tried to default to Dropwizard but could not find DropwizardAppExtension.");
+                "No test URL specified. Tried to default to Dropwizard but could not find DropwizardAppExtension.");
       }
 
       env = new TestEnvironment(
@@ -76,19 +49,35 @@ public class TestEnvironmentExtension implements ParameterResolver {
               baseUrl.orElse(
                       String.format("http://localhost:%d", dropwizardAppExtension.getLocalPort()))
       );
-      return env;
+    }
+    return env;
+  }
+
+  @Override
+  public boolean supportsParameter(
+          ParameterContext parameterContext, ExtensionContext extensionContext)
+          throws ParameterResolutionException {
+    return parameterContext.getParameter().getType().equals(TestEnvironment.class);
+  }
+
+  @Override
+  public Object resolveParameter(
+          ParameterContext parameterContext, ExtensionContext extensionContext)
+          throws ParameterResolutionException {
+    try {
+      return getEnv(extensionContext);
     } catch (IllegalAccessException e) {
       throw new ParameterResolutionException(e.getMessage());
     }
   }
 
-  private Client getHttpClient(DropwizardAppExtension dropwizardAppExtension) {
+  private static Client getHttpClient(DropwizardAppExtension dropwizardAppExtension) {
     Optional<String> httpClientImpl = Optional.ofNullable(System.getenv(ENV_HTTP_CLIENT_FACTORY_IMPL));
 
     if (httpClientImpl.isEmpty()) {
       if (dropwizardAppExtension == null) {
         throw new ParameterResolutionException(
-            "Tried to default to Dropwizard client but could not find DropwizardAppExtension.");
+                "Tried to default to Dropwizard client but could not find DropwizardAppExtension.");
       }
       return dropwizardAppExtension.client();
     }
@@ -98,9 +87,9 @@ public class TestEnvironmentExtension implements ParameterResolver {
       httpClientFactory = (TestHttpClientFactory)(Class.forName(httpClientImpl.get()).getDeclaredConstructor().newInstance());
     } catch (Exception e) {
       throw new IllegalArgumentException(
-          String.format(
-              "Cannot initialize http Client, %s does not implement PolarisTestHttpClientFactory.", httpClientImpl),
-          e);
+              String.format(
+                      "Cannot initialize http Client, %s does not implement PolarisTestHttpClientFactory.", httpClientImpl),
+              e);
     }
     return httpClientFactory.buildClient();
   }
