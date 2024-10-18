@@ -23,7 +23,6 @@ import static org.apache.polaris.service.test.PolarisConnectionExtension.findDro
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import jakarta.ws.rs.client.Client;
 import java.util.Optional;
-import org.apache.iceberg.common.DynConstructors;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
@@ -31,7 +30,7 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 
 public class TestEnvironmentExtension implements ParameterResolver {
   private static final String ENV_BASE_URL = "INTEGRATION_TEST_BASE_URL";
-  private static final String ENV_HTTP_CLIENT_IMPL = "INTEGRATION_TEST_HTTP_CLIENT_IMPL";
+  private static final String ENV_HTTP_CLIENT_FACTORY_IMPL = "INTEGRATION_TEST_HTTP_CLIENT_FACTORY_IMPL";
 
   private static TestEnvironment env;
 
@@ -84,7 +83,7 @@ public class TestEnvironmentExtension implements ParameterResolver {
   }
 
   private Client getHttpClient(DropwizardAppExtension dropwizardAppExtension) {
-    var httpClientImpl = Optional.ofNullable(System.getenv(ENV_HTTP_CLIENT_IMPL));
+    Optional<String> httpClientImpl = Optional.ofNullable(System.getenv(ENV_HTTP_CLIENT_FACTORY_IMPL));
 
     if (httpClientImpl.isEmpty()) {
       if (dropwizardAppExtension == null) {
@@ -94,28 +93,15 @@ public class TestEnvironmentExtension implements ParameterResolver {
       return dropwizardAppExtension.client();
     }
 
-    DynConstructors.Ctor<Client> ctor;
+    TestHttpClientFactory httpClientFactory;
     try {
-      ctor =
-          DynConstructors.builder(Client.class)
-              .loader(TestEnvironmentExtension.class.getClassLoader())
-              .impl(httpClientImpl.get())
-              .buildChecked();
-    } catch (NoSuchMethodException e) {
+      httpClientFactory = (TestHttpClientFactory)(Class.forName(httpClientImpl.get()).getDeclaredConstructor().newInstance());
+    } catch (Exception e) {
       throw new IllegalArgumentException(
           String.format(
-              "Cannot initialize http Client implementation %s: %s",
-              httpClientImpl, e.getMessage()),
+              "Cannot initialize http Client, %s does not implement PolarisTestHttpClientFactory.", httpClientImpl),
           e);
     }
-
-    try {
-      return ctor.newInstance();
-    } catch (ClassCastException e) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Cannot initialize http Client, %s does not implement Client.", httpClientImpl),
-          e);
-    }
+    return httpClientFactory.buildClient();
   }
 }
