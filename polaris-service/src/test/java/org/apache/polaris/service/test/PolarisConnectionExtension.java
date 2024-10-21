@@ -27,6 +27,7 @@ import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -90,15 +91,25 @@ public class PolarisConnectionExtension
         metaStoreManagerFactory.bootstrapRealms(List.of(realm));
       }
 
+      URI testEnvUri = TestEnvironmentExtension.getEnv(extensionContext).getBaseUri();
+      String path = testEnvUri.getPath();
+      if (path.isEmpty()) {
+        path = "/";
+      }
+
       RealmContext realmContext =
           config
               .getRealmContextResolver()
               .resolveRealmContext(
-                  "http://localhost", "GET", "/", Map.of(), Map.of(REALM_PROPERTY_KEY, realm));
+                  String.format("%s://%s", testEnvUri.getScheme(), testEnvUri.getAuthority()),
+                  "GET",
+                  path,
+                  Map.of(),
+                  Map.of(REALM_PROPERTY_KEY, realm));
       CallContext ctx =
           config
               .getCallContextResolver()
-              .resolveCallContext(realmContext, "GET", "/", Map.of(), Map.of());
+              .resolveCallContext(realmContext, "GET", path, Map.of(), Map.of());
       CallContext.setCurrentContext(ctx);
       PolarisMetaStoreManager metaStoreManager =
           metaStoreManagerFactory.getOrCreateMetaStoreManager(ctx.getRealmContext());
@@ -189,14 +200,19 @@ public class PolarisConnectionExtension
       ParameterContext parameterContext, ExtensionContext extensionContext)
       throws ParameterResolutionException {
     if (parameterContext.getParameter().getType().equals(PolarisToken.class)) {
-      String token =
-          TokenUtils.getTokenFromSecrets(
-              dropwizardAppExtension.client(),
-              dropwizardAppExtension.getLocalPort(),
-              adminSecrets.getPrincipalClientId(),
-              adminSecrets.getMainSecret(),
-              realm);
-      return new PolarisToken(token);
+      try {
+        TestEnvironment testEnv = TestEnvironmentExtension.getEnv(extensionContext);
+        String token =
+            TokenUtils.getTokenFromSecrets(
+                testEnv.getApiClient(),
+                testEnv.getBaseUrl(),
+                adminSecrets.getPrincipalClientId(),
+                adminSecrets.getMainSecret(),
+                realm);
+        return new PolarisToken(token);
+      } catch (IllegalAccessException e) {
+        throw new ParameterResolutionException(e.getMessage());
+      }
     } else if (parameterContext.getParameter().getType().equals(String.class)
         && parameterContext.getParameter().isAnnotationPresent(PolarisRealm.class)) {
       return realm;
