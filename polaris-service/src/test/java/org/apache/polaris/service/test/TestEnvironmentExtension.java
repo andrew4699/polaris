@@ -29,19 +29,20 @@ import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
 /**
- * JUnit test extension that constructs a TestEnvironment.
- * It tries to use environment variables and falls back to communicating with the local Dropwizard instance.
+ * JUnit test extension that constructs a TestEnvironment. It tries to use environment variables and
+ * falls back to communicating with the local Dropwizard instance.
  */
 public class TestEnvironmentExtension implements ParameterResolver {
   /**
-   * Environment variable that specifies the Polaris base URL to use.
-   * If this is not set, falls back to the root path of your Dropwizard instance.
+   * Environment variable that specifies the Polaris base URL to use. If this is not set, falls back
+   * to the root path of your Dropwizard instance.
    */
   public static final String ENV_BASE_URL = "INTEGRATION_TEST_BASE_URL";
 
   /**
-   * Environment variable that specifies the HTTP client factory that should construct test HTTP clients.
-   * If this is not set, falls back to the client created by Dropwizard.
+   * Environment variable that specifies the HTTP client factory that should construct test HTTP
+   * clients. This should be a class name. If this is not set, falls back to the client created by
+   * Dropwizard.
    */
   public static final String ENV_HTTP_CLIENT_FACTORY_IMPL =
       "INTEGRATION_TEST_HTTP_CLIENT_FACTORY_IMPL";
