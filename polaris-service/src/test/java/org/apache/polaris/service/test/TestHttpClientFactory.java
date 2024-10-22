@@ -20,6 +20,7 @@ package org.apache.polaris.service.test;
 
 import jakarta.ws.rs.client.Client;
 
+/** Interface for a factory that constructs HTTP clients for tests */
 public interface TestHttpClientFactory {
   Client buildClient();
 }

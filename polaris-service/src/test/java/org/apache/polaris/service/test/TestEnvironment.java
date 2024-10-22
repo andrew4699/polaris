@@ -21,6 +21,7 @@ package org.apache.polaris.service.test;
 import jakarta.ws.rs.client.Client;
 import java.net.URI;
 
+/** Defines the test environment that a test should run in. */
 public class TestEnvironment {
   private final Client apiClient;
   private final String baseUrl;
