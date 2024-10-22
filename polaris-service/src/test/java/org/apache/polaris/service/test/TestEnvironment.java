@@ -22,26 +22,8 @@ import jakarta.ws.rs.client.Client;
 import java.net.URI;
 
 /** Defines the test environment that a test should run in. */
-public class TestEnvironment {
-  private final Client apiClient;
-  private final String baseUrl;
-  private final URI baseUri;
-
-  public TestEnvironment(Client apiClient, String baseUrl) {
-    this.apiClient = apiClient;
-    this.baseUrl = baseUrl;
-    this.baseUri = URI.create(baseUrl);
-  }
-
-  public Client getApiClient() {
-    return apiClient;
-  }
-
-  public String getBaseUrl() {
-    return baseUrl;
-  }
-
+public record TestEnvironment(Client apiClient, String baseUrl) {
   public URI getBaseUri() {
-    return baseUri;
+    return URI.create(baseUrl);
   }
 }

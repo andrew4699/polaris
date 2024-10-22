@@ -18,10 +18,7 @@
  */
 package org.apache.polaris.service.test;
 
-import static org.apache.polaris.service.test.PolarisConnectionExtension.findDropwizardExtension;
-
-import io.dropwizard.testing.junit5.DropwizardAppExtension;
-import jakarta.ws.rs.client.Client;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -29,41 +26,23 @@ import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
 /**
- * JUnit test extension that constructs a TestEnvironment. It tries to use environment variables and
- * falls back to communicating with the local Dropwizard instance.
+ * JUnit test extension that determines the TestEnvironment. Falls back to targetting the local
+ * Dropwizard instance.
  */
 public class TestEnvironmentExtension implements ParameterResolver {
   /**
-   * Environment variable that specifies the Polaris base URL to use. If this is not set, falls back
-   * to the root path of your Dropwizard instance.
+   * Environment variable that specifies the test environment resolver. This should be a class name.
+   * If this is not set, falls back to DropwizardTestEnvironmentResolver.
    */
-  public static final String ENV_BASE_URL = "INTEGRATION_TEST_BASE_URL";
-
-  /**
-   * Environment variable that specifies the HTTP client factory that should construct test HTTP
-   * clients. This should be a class name. If this is not set, falls back to the client created by
-   * Dropwizard.
-   */
-  public static final String ENV_HTTP_CLIENT_FACTORY_IMPL =
-      "INTEGRATION_TEST_HTTP_CLIENT_FACTORY_IMPL";
+  public static final String ENV_TEST_ENVIRONMENT_RESOLVER_IMPL =
+      "INTEGRATION_TEST_ENVIRONMENT_RESOLVER_IMPL";
 
   private static TestEnvironment env;
 
   public static synchronized TestEnvironment getEnv(ExtensionContext extensionContext)
       throws IllegalAccessException {
     if (env == null) {
-      Optional<String> baseUrl = Optional.ofNullable(System.getenv(ENV_BASE_URL));
-      DropwizardAppExtension dropwizardAppExtension = findDropwizardExtension(extensionContext);
-      if (dropwizardAppExtension == null && baseUrl.isEmpty()) {
-        throw new ParameterResolutionException(
-            "No test URL specified. Tried to default to Dropwizard but could not find DropwizardAppExtension.");
-      }
-
-      env =
-          new TestEnvironment(
-              getHttpClient(dropwizardAppExtension),
-              baseUrl.orElse(
-                  String.format("http://localhost:%d", dropwizardAppExtension.getLocalPort())));
+      env = getTestEnvironmentResolver().resolveTestEnvironment(extensionContext);
     }
     return env;
   }
@@ -86,30 +65,23 @@ public class TestEnvironmentExtension implements ParameterResolver {
     }
   }
 
-  private static Client getHttpClient(DropwizardAppExtension dropwizardAppExtension) {
-    Optional<String> httpClientImpl =
-        Optional.ofNullable(System.getenv(ENV_HTTP_CLIENT_FACTORY_IMPL));
+  private static TestEnvironmentResolver getTestEnvironmentResolver() {
+    String impl =
+        Optional.ofNullable(System.getenv(ENV_TEST_ENVIRONMENT_RESOLVER_IMPL))
+            .orElse(DropwizardTestEnvironmentResolver.class.getName());
 
-    if (httpClientImpl.isEmpty()) {
-      if (dropwizardAppExtension == null) {
-        throw new ParameterResolutionException(
-            "Tried to default to Dropwizard client but could not find DropwizardAppExtension.");
-      }
-      return dropwizardAppExtension.client();
-    }
-
-    TestHttpClientFactory httpClientFactory;
     try {
-      httpClientFactory =
-          (TestHttpClientFactory)
-              (Class.forName(httpClientImpl.get()).getDeclaredConstructor().newInstance());
-    } catch (Exception e) {
+      return (TestEnvironmentResolver) (Class.forName(impl).getDeclaredConstructor().newInstance());
+    } catch (InstantiationException
+        | IllegalAccessException
+        | IllegalArgumentException
+        | InvocationTargetException
+        | ClassNotFoundException
+        | NoSuchMethodException e) {
       throw new IllegalArgumentException(
           String.format(
-              "Cannot initialize http Client, %s does not implement PolarisTestHttpClientFactory.",
-              httpClientImpl),
+              "Failed to initialize TestEnvironmentResolver using implementation %s.", impl),
           e);
     }
-    return httpClientFactory.buildClient();
   }
 }

@@ -18,9 +18,9 @@
  */
 package org.apache.polaris.service.test;
 
-import jakarta.ws.rs.client.Client;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
-/** Interface for a factory that constructs HTTP clients for tests */
-public interface TestHttpClientFactory {
-  Client buildClient();
+/** Interface for determining the test environment that tests should run in */
+public interface TestEnvironmentResolver {
+  TestEnvironment resolveTestEnvironment(ExtensionContext extensionContext);
 }
