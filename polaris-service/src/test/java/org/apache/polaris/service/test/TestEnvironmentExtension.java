@@ -30,19 +30,12 @@ import org.junit.jupiter.api.extension.ParameterResolver;
  * Dropwizard instance.
  */
 public class TestEnvironmentExtension implements ParameterResolver {
-  /**
-   * Environment variable that specifies the test environment resolver. This should be a class name.
-   * If this is not set, falls back to DropwizardTestEnvironmentResolver.
-   */
-  public static final String ENV_TEST_ENVIRONMENT_RESOLVER_IMPL =
-      "INTEGRATION_TEST_ENVIRONMENT_RESOLVER_IMPL";
-
   private static TestEnvironment env;
 
   public static synchronized TestEnvironment getEnv(ExtensionContext extensionContext)
       throws IllegalAccessException {
     if (env == null) {
-      env = getTestEnvironmentResolver().resolveTestEnvironment(extensionContext);
+      env = new DropwizardTestEnvironmentResolver().resolveTestEnvironment(extensionContext);
     }
     return env;
   }
@@ -62,26 +55,6 @@ public class TestEnvironmentExtension implements ParameterResolver {
       return getEnv(extensionContext);
     } catch (IllegalAccessException e) {
       throw new ParameterResolutionException(e.getMessage());
-    }
-  }
-
-  private static TestEnvironmentResolver getTestEnvironmentResolver() {
-    String impl =
-        Optional.ofNullable(System.getenv(ENV_TEST_ENVIRONMENT_RESOLVER_IMPL))
-            .orElse(DropwizardTestEnvironmentResolver.class.getName());
-
-    try {
-      return (TestEnvironmentResolver) (Class.forName(impl).getDeclaredConstructor().newInstance());
-    } catch (InstantiationException
-        | IllegalAccessException
-        | IllegalArgumentException
-        | InvocationTargetException
-        | ClassNotFoundException
-        | NoSuchMethodException e) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Failed to initialize TestEnvironmentResolver using implementation %s.", impl),
-          e);
     }
   }
 }
