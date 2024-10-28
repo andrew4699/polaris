@@ -30,12 +30,14 @@ import org.junit.jupiter.api.extension.ParameterResolver;
  * Dropwizard instance.
  */
 public class TestEnvironmentExtension implements ParameterResolver {
+  public static TestEnvironmentResolver resolver;
+
   private static TestEnvironment env;
 
   public static synchronized TestEnvironment getEnv(ExtensionContext extensionContext)
       throws IllegalAccessException {
     if (env == null) {
-      env = new DropwizardTestEnvironmentResolver().resolveTestEnvironment(extensionContext);
+      env = resolver.resolveTestEnvironment(extensionContext);
     }
     return env;
   }
