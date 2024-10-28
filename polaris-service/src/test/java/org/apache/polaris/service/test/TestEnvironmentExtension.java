@@ -35,7 +35,7 @@ public class TestEnvironmentExtension implements ParameterResolver {
   public static synchronized TestEnvironment getEnv(ExtensionContext extensionContext)
       throws IllegalAccessException {
     if (env == null) {
-      env = new DropwizardTestEnvironmentResolver().resolveTestEnvironment(extensionContext);
+      env = new OtherTestEnvironmentResolver().resolveTestEnvironment(extensionContext);
     }
     return env;
   }
