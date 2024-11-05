@@ -74,6 +74,7 @@ public class TimedApplicationEventListener implements ApplicationEventListener {
           metric = timedApi.value();
           sw = Stopwatch.createStarted();
           polarisMetricRegistry.incrementCounter(metric, realmId);
+          polarisMetricRegistry.incrementTimedApiCounter(metric, realmId);
         }
 
       } else if (event.getType() == RequestEvent.Type.FINISHED && metric != null) {
@@ -83,6 +84,7 @@ public class TimedApplicationEventListener implements ApplicationEventListener {
         } else {
           int statusCode = event.getContainerResponse().getStatus();
           polarisMetricRegistry.incrementErrorCounter(metric, statusCode, realmId);
+          polarisMetricRegistry.incrementTimedApiErrorCounter(metric, statusCode, realmId);
         }
       }
     }

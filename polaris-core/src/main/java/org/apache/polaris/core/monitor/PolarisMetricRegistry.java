@@ -18,8 +18,10 @@
  */
 package org.apache.polaris.core.monitor;
 
+import com.google.common.collect.Iterables;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
@@ -27,6 +29,8 @@ import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -44,9 +48,12 @@ public class PolarisMetricRegistry {
   private final ConcurrentMap<String, Counter> counters = new ConcurrentHashMap<>();
   private static final String TAG_REALM = "REALM_ID";
   private static final String TAG_RESP_CODE = "HTTP_RESPONSE_CODE";
+  private static final String TAG_API_NAME = "API_NAME";
   private static final String SUFFIX_COUNTER = ".count";
   private static final String SUFFIX_ERROR = ".error";
   private static final String SUFFIX_REALM = ".realm";
+  private static final String METRIC_TIMEDAPI_COUNT = "polaris.TimedApi" + SUFFIX_COUNTER;
+  private static final String METRIC_TIMEDAPI_ERROR = "polaris.TimedApi" + SUFFIX_ERROR;
 
   public PolarisMetricRegistry(MeterRegistry meterRegistry) {
     this.meterRegistry = meterRegistry;
@@ -68,63 +75,68 @@ public class PolarisMetricRegistry {
         if (method.isAnnotationPresent(TimedApi.class)) {
           TimedApi timedApi = method.getAnnotation(TimedApi.class);
           String metric = timedApi.value();
-          timers.put(metric, Timer.builder(metric).register(meterRegistry));
-          counters.put(
-              metric + SUFFIX_COUNTER,
-              Counter.builder(metric + SUFFIX_COUNTER).register(meterRegistry));
+          computeTimerIfAbsent(metric, Collections.emptyList());
+          computeCounterIfAbsent(metric + SUFFIX_COUNTER, Collections.emptyList());
 
           // Error counters contain the HTTP response code in a tag, thus caching them would not be
           // meaningful.
-          Counter.builder(metric + SUFFIX_ERROR).tags(TAG_RESP_CODE, "400").register(meterRegistry);
-          Counter.builder(metric + SUFFIX_ERROR).tags(TAG_RESP_CODE, "500").register(meterRegistry);
+          computeCounterIfAbsent(
+              metric + SUFFIX_ERROR, Collections.singleton(Tag.of(TAG_RESP_CODE, "400")));
+          computeCounterIfAbsent(
+              metric + SUFFIX_ERROR, Collections.singleton(Tag.of(TAG_RESP_CODE, "500")));
         }
       }
     }
   }
 
   public void recordTimer(String metric, long elapsedTimeMs, String realmId) {
-    Timer timer =
-        timers.computeIfAbsent(metric, m -> Timer.builder(metric).register(meterRegistry));
+    Timer timer = computeTimerIfAbsent(metric, Collections.emptyList());
     timer.record(elapsedTimeMs, TimeUnit.MILLISECONDS);
 
     Timer timerRealm =
-        timers.computeIfAbsent(
-            metric + SUFFIX_REALM,
-            m ->
-                Timer.builder(metric + SUFFIX_REALM)
-                    .tag(TAG_REALM, realmId)
-                    .register(meterRegistry));
+        computeTimerIfAbsent(
+            metric + SUFFIX_REALM, Collections.singleton(Tag.of(TAG_REALM, realmId)));
     timerRealm.record(elapsedTimeMs, TimeUnit.MILLISECONDS);
   }
 
   public void incrementCounter(String metric, String realmId) {
-    String counterMetric = metric + SUFFIX_COUNTER;
-    Counter counter =
-        counters.computeIfAbsent(
-            counterMetric, m -> Counter.builder(counterMetric).register(meterRegistry));
-    counter.increment();
-
-    Counter counterRealm =
-        counters.computeIfAbsent(
-            counterMetric + SUFFIX_REALM,
-            m ->
-                Counter.builder(counterMetric + SUFFIX_REALM)
-                    .tag(TAG_REALM, realmId)
-                    .register(meterRegistry));
-    counterRealm.increment();
+    incrementCounter(metric + SUFFIX_COUNTER, realmId, Collections.emptyList());
   }
 
   public void incrementErrorCounter(String metric, int statusCode, String realmId) {
-    String errorMetric = metric + SUFFIX_ERROR;
-    Counter.builder(errorMetric)
-        .tag(TAG_RESP_CODE, String.valueOf(statusCode))
-        .register(meterRegistry)
-        .increment();
+    incrementCounter(
+        metric + SUFFIX_ERROR, realmId, Tag.of(TAG_RESP_CODE, String.valueOf(statusCode)));
+  }
 
-    Counter.builder(errorMetric + SUFFIX_REALM)
-        .tag(TAG_RESP_CODE, String.valueOf(statusCode))
-        .tag(TAG_REALM, realmId)
-        .register(meterRegistry)
-        .increment();
+  public void incrementTimedApiCounter(String apiName, String realmId) {
+    incrementCounter(METRIC_TIMEDAPI_COUNT, realmId, Tag.of(TAG_API_NAME, apiName));
+  }
+
+  public void incrementTimedApiErrorCounter(String apiName, int statusCode, String realmId) {
+    incrementCounter(
+        METRIC_TIMEDAPI_ERROR,
+        realmId,
+        List.of(Tag.of(TAG_API_NAME, apiName), Tag.of(TAG_RESP_CODE, String.valueOf(statusCode))));
+  }
+
+  private void incrementCounter(String name, String realmId, Tag tag) {
+    incrementCounter(name, realmId, Collections.singleton(tag));
+  }
+
+  private void incrementCounter(String name, String realmId, Iterable<Tag> tags) {
+    computeCounterIfAbsent(name, tags).increment();
+    computeCounterIfAbsent(
+        name + SUFFIX_REALM,
+        Iterables.concat(Collections.singleton(Tag.of(TAG_REALM, realmId)), tags));
+  }
+
+  private Counter computeCounterIfAbsent(String name, Iterable<Tag> tags) {
+    return counters.computeIfAbsent(
+        name, m -> Counter.builder(name).tags(tags).register(meterRegistry));
+  }
+
+  private Timer computeTimerIfAbsent(String name, Iterable<Tag> tags) {
+    return timers.computeIfAbsent(
+        name, m -> Timer.builder(name).tags(tags).register(meterRegistry));
   }
 }
