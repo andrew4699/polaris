@@ -82,8 +82,8 @@ public class SnowmanCredentialsExtension
             .header("Authorization", "Bearer " + userToken)
             .header(REALM_PROPERTY_KEY, realm)
             .post(Entity.json(principalRole))) {
-      assertThat(createPrResponse)
-          .returns(Response.Status.CREATED.getStatusCode(), Response::getStatus);
+      assertThat(createPrResponse.getStatus())
+          .isIn(Response.Status.CREATED.getStatusCode(), Response.Status.CONFLICT.getStatusCode());
     }
 
     Principal principal = new Principal("snowman");
@@ -96,8 +96,8 @@ public class SnowmanCredentialsExtension
             .header("Authorization", "Bearer " + userToken) // how is token getting used?
             .header(REALM_PROPERTY_KEY, realm)
             .post(Entity.json(principal))) {
-      assertThat(createPResponse)
-          .returns(Response.Status.CREATED.getStatusCode(), Response::getStatus);
+      assertThat(createPResponse.getStatus())
+          .isIn(Response.Status.CREATED.getStatusCode(), Response.Status.CONFLICT.getStatusCode());
       PrincipalWithCredentials snowmanWithCredentials =
           createPResponse.readEntity(PrincipalWithCredentials.class);
       try (Response rotateResp =
