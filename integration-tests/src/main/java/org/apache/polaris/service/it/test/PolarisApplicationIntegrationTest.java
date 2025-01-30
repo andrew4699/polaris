@@ -144,7 +144,7 @@ public class PolarisApplicationIntegrationTest {
    */
   @BeforeEach
   public void before(TestInfo testInfo) {
-    principalRoleName = client.newEntityName("admin");
+    principalRoleName = client.newEntityName("admin", testInfo);
     PrincipalRole principalRole = new PrincipalRole(principalRoleName);
     try (Response createPrResponse =
         managementApi.request("v1/principal-roles").post(Entity.json(principalRole))) {
@@ -160,7 +160,7 @@ public class PolarisApplicationIntegrationTest {
           .returns(Response.Status.CREATED.getStatusCode(), Response::getStatus);
     }
 
-    internalCatalogName = client.newEntityName(testInfo.getTestMethod().orElseThrow().getName());
+    internalCatalogName = client.newEntityName(testInfo.getTestMethod().orElseThrow().getName(), testInfo);
     createCatalog(internalCatalogName, Catalog.TypeEnum.INTERNAL, principalRoleName);
   }
 
@@ -321,9 +321,9 @@ public class PolarisApplicationIntegrationTest {
   }
 
   @Test
-  public void testIcebergCreateNamespaceInExternalCatalog() throws IOException {
+  public void testIcebergCreateNamespaceInExternalCatalog(TestInfo testInfo) throws IOException {
     String catalogName =
-        client.newEntityName("testIcebergCreateNamespaceInExternalCatalogExternal");
+        client.newEntityName("testIcebergCreateNamespaceInExternalCatalogExternal", testInfo);
     createCatalog(catalogName, Catalog.TypeEnum.EXTERNAL, principalRoleName);
     try (RESTSessionCatalog sessionCatalog = newSessionCatalog(catalogName)) {
       SessionCatalog.SessionContext sessionContext = SessionCatalog.SessionContext.createEmpty();
@@ -341,8 +341,8 @@ public class PolarisApplicationIntegrationTest {
   }
 
   @Test
-  public void testIcebergDropNamespaceInExternalCatalog() throws IOException {
-    String catalogName = client.newEntityName("testIcebergDropNamespaceInExternalCatalogExternal");
+  public void testIcebergDropNamespaceInExternalCatalog(TestInfo testInfo) throws IOException {
+    String catalogName = client.newEntityName("testIcebergDropNamespaceInExternalCatalogExternal", testInfo);
     createCatalog(catalogName, Catalog.TypeEnum.EXTERNAL, principalRoleName);
     try (RESTSessionCatalog sessionCatalog = newSessionCatalog(catalogName)) {
       SessionCatalog.SessionContext sessionContext = SessionCatalog.SessionContext.createEmpty();
@@ -358,8 +358,8 @@ public class PolarisApplicationIntegrationTest {
   }
 
   @Test
-  public void testIcebergCreateTablesInExternalCatalog() throws IOException {
-    String catalogName = client.newEntityName("testIcebergCreateTablesInExternalCatalogExternal");
+  public void testIcebergCreateTablesInExternalCatalog(TestInfo testInfo) throws IOException {
+    String catalogName = client.newEntityName("testIcebergCreateTablesInExternalCatalogExternal", testInfo);
     createCatalog(catalogName, Catalog.TypeEnum.EXTERNAL, principalRoleName);
     try (RESTSessionCatalog sessionCatalog = newSessionCatalog(catalogName)) {
       SessionCatalog.SessionContext sessionContext = SessionCatalog.SessionContext.createEmpty();
@@ -385,9 +385,9 @@ public class PolarisApplicationIntegrationTest {
   }
 
   @Test
-  public void testIcebergCreateTablesWithWritePathBlocked() throws IOException {
+  public void testIcebergCreateTablesWithWritePathBlocked(TestInfo testInfo) throws IOException {
     String catalogName =
-        client.newEntityName("testIcebergCreateTablesWithWritePathBlockedInternal");
+        client.newEntityName("testIcebergCreateTablesWithWritePathBlockedInternal", testInfo);
     createCatalog(catalogName, Catalog.TypeEnum.INTERNAL, principalRoleName);
     try (RESTSessionCatalog sessionCatalog = newSessionCatalog(catalogName)) {
       SessionCatalog.SessionContext sessionContext = SessionCatalog.SessionContext.createEmpty();
@@ -430,8 +430,8 @@ public class PolarisApplicationIntegrationTest {
   }
 
   @Test
-  public void testIcebergRegisterTableInExternalCatalog() throws IOException {
-    String catalogName = client.newEntityName("testIcebergRegisterTableInExternalCatalogExternal");
+  public void testIcebergRegisterTableInExternalCatalog(TestInfo testInfo) throws IOException {
+    String catalogName = client.newEntityName("testIcebergRegisterTableInExternalCatalogExternal", testInfo);
     createCatalog(
         catalogName,
         Catalog.TypeEnum.EXTERNAL,
@@ -476,8 +476,8 @@ public class PolarisApplicationIntegrationTest {
   }
 
   @Test
-  public void testIcebergUpdateTableInExternalCatalog() throws IOException {
-    String catalogName = client.newEntityName("testIcebergUpdateTableInExternalCatalogExternal");
+  public void testIcebergUpdateTableInExternalCatalog(TestInfo testInfo) throws IOException {
+    String catalogName = client.newEntityName("testIcebergUpdateTableInExternalCatalogExternal", testInfo);
     createCatalog(
         catalogName,
         Catalog.TypeEnum.EXTERNAL,
@@ -528,8 +528,8 @@ public class PolarisApplicationIntegrationTest {
   }
 
   @Test
-  public void testIcebergDropTableInExternalCatalog() throws IOException {
-    String catalogName = client.newEntityName("testIcebergDropTableInExternalCatalogExternal");
+  public void testIcebergDropTableInExternalCatalog(TestInfo testInfo) throws IOException {
+    String catalogName = client.newEntityName("testIcebergDropTableInExternalCatalogExternal", testInfo);
     createCatalog(
         catalogName,
         Catalog.TypeEnum.EXTERNAL,

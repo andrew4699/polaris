@@ -30,6 +30,7 @@ import java.util.Random;
 import org.apache.iceberg.rest.RESTSerializers;
 import org.apache.polaris.core.admin.model.PrincipalWithCredentials;
 import org.apache.polaris.service.it.ext.PolarisServerManager;
+import org.junit.jupiter.api.TestInfo;
 
 /**
  * This is a holder for the heavy-weight HTTP client for accessing Polaris APIs. This class provides
@@ -76,8 +77,8 @@ public final class PolarisClient implements AutoCloseable {
    * <li>Identify top-level entities for latger clean-up by {@link #cleanUp(ClientCredentials)}.
    * <li>Allow {@link PolarisServerManager}s to customize top-level entities per environment.
    */
-  public String newEntityName(String hint) {
-    return polarisServerManager().transformEntityName(hint + "_" + clientId);
+  public String newEntityName(String hint, TestInfo testInfo) {
+    return polarisServerManager().transformEntityName(hint + "_" + clientId, testInfo);
   }
 
   public ManagementApi managementApi(String authToken) {

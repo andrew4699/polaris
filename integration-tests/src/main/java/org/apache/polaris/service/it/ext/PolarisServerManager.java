@@ -27,6 +27,7 @@ import jakarta.ws.rs.client.ClientBuilder;
 import java.util.ServiceLoader;
 import org.apache.polaris.service.it.env.IcebergTokenAccessManager;
 import org.apache.polaris.service.it.env.Server;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
@@ -73,7 +74,7 @@ public interface PolarisServerManager {
    * roles), but may not be called for secondary entities (such as catalog roles, namespaces,
    * tables, etc.).
    */
-  default String transformEntityName(String name) {
+  default String transformEntityName(String name, TestInfo testInfo) {
     return name;
   }
 }

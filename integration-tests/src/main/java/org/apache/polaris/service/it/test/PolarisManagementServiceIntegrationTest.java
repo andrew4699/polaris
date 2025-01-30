@@ -83,6 +83,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
@@ -285,7 +286,7 @@ public class PolarisManagementServiceIntegrationTest {
   }
 
   @Test
-  public void testCreateCatalogWithGcpStorageConfig() {
+  public void testCreateCatalogWithGcpStorageConfig(TestInfo testInfo) {
     GcpStorageConfigInfo gcpConfigModel =
         GcpStorageConfigInfo.builder()
             .setGcsServiceAccount("my-sa")
@@ -294,7 +295,7 @@ public class PolarisManagementServiceIntegrationTest {
     Catalog catalog =
         PolarisCatalog.builder()
             .setType(Catalog.TypeEnum.INTERNAL)
-            .setName(client.newEntityName("my-catalog"))
+            .setName(client.newEntityName("my-catalog", testInfo))
             .setProperties(new CatalogProperties("gs://my-bucket/path/to/data"))
             .setStorageConfigInfo(gcpConfigModel)
             .build();
@@ -398,7 +399,7 @@ public class PolarisManagementServiceIntegrationTest {
   }
 
   @Test
-  public void testUpdateCatalogWithoutDefaultBaseLocationInUpdate() {
+  public void testUpdateCatalogWithoutDefaultBaseLocationInUpdate(TestInfo testInfo) {
     AwsStorageConfigInfo awsConfigModel =
         AwsStorageConfigInfo.builder()
             .setRoleArn("arn:aws:iam::123456789012:role/my-role")
@@ -408,7 +409,7 @@ public class PolarisManagementServiceIntegrationTest {
             .setAllowedLocations(List.of("s3://my-old-bucket/path/to/data"))
             .build();
     String catalogName =
-        client.newEntityName("testUpdateCatalogWithoutDefaultBaseLocationInUpdate");
+        client.newEntityName("testUpdateCatalogWithoutDefaultBaseLocationInUpdate", testInfo);
     Catalog catalog =
         PolarisCatalog.builder()
             .setType(Catalog.TypeEnum.INTERNAL)
@@ -455,7 +456,7 @@ public class PolarisManagementServiceIntegrationTest {
   }
 
   @Test
-  public void testCreateExternalCatalog() {
+  public void testCreateExternalCatalog(TestInfo testInfo) {
     AwsStorageConfigInfo awsConfigModel =
         AwsStorageConfigInfo.builder()
             .setRoleArn("arn:aws:iam::123456789012:role/my-role")
@@ -464,7 +465,7 @@ public class PolarisManagementServiceIntegrationTest {
             .setStorageType(StorageConfigInfo.StorageTypeEnum.S3)
             .setAllowedLocations(List.of("s3://my-old-bucket/path/to/data"))
             .build();
-    String catalogName = client.newEntityName("my-external-catalog");
+    String catalogName = client.newEntityName("my-external-catalog", testInfo);
     String remoteUrl = "http://localhost:8080";
     Catalog catalog =
         ExternalCatalog.builder()
@@ -532,10 +533,10 @@ public class PolarisManagementServiceIntegrationTest {
   }
 
   @Test
-  public void testCreateAndUpdateAzureCatalog() {
+  public void testCreateAndUpdateAzureCatalog(TestInfo testInfo) {
     StorageConfigInfo storageConfig =
         new AzureStorageConfigInfo("azure:tenantid:12345", StorageConfigInfo.StorageTypeEnum.AZURE);
-    String catalogName = client.newEntityName("myazurecatalog");
+    String catalogName = client.newEntityName("myazurecatalog", testInfo);
     Catalog catalog =
         PolarisCatalog.builder()
             .setType(Catalog.TypeEnum.INTERNAL)
@@ -603,11 +604,11 @@ public class PolarisManagementServiceIntegrationTest {
   }
 
   @Test
-  public void testCreateListUpdateAndDeleteCatalog() {
+  public void testCreateListUpdateAndDeleteCatalog(TestInfo testInfo) {
     StorageConfigInfo storageConfig =
         new AwsStorageConfigInfo(
             "arn:aws:iam::123456789011:role/role1", StorageConfigInfo.StorageTypeEnum.S3);
-    String catalogName = client.newEntityName("mycatalog");
+    String catalogName = client.newEntityName("mycatalog", testInfo);
     Catalog catalog =
         PolarisCatalog.builder()
             .setType(Catalog.TypeEnum.INTERNAL)
@@ -765,8 +766,8 @@ public class PolarisManagementServiceIntegrationTest {
   }
 
   @Test
-  public void testCatalogRoleInvalidName() {
-    String catalogName = client.newEntityName("mycatalog1");
+  public void testCatalogRoleInvalidName(TestInfo testInfo) {
+    String catalogName = client.newEntityName("mycatalog1", testInfo);
     Catalog catalog =
         PolarisCatalog.builder()
             .setType(Catalog.TypeEnum.INTERNAL)
@@ -803,19 +804,19 @@ public class PolarisManagementServiceIntegrationTest {
   }
 
   @Test
-  public void testListPrincipalsUnauthorized() {
+  public void testListPrincipalsUnauthorized(TestInfo testInfo) {
     PrincipalWithCredentials principal =
-        managementApi.createPrincipal(client.newEntityName("new_admin"));
+        managementApi.createPrincipal(client.newEntityName("new_admin", testInfo));
     try (Response response = client.managementApi(principal).request("v1/principals").get()) {
       assertThat(response).returns(Response.Status.FORBIDDEN.getStatusCode(), Response::getStatus);
     }
   }
 
   @Test
-  public void testCreatePrincipalAndRotateCredentials() {
+  public void testCreatePrincipalAndRotateCredentials(TestInfo testInfo) {
     Principal principal =
         Principal.builder()
-            .setName(client.newEntityName("myprincipal"))
+            .setName(client.newEntityName("myprincipal", TestInfo testInfo))
             .setProperties(Map.of("custom-tag", "foo"))
             .build();
 
@@ -874,10 +875,10 @@ public class PolarisManagementServiceIntegrationTest {
   }
 
   @Test
-  public void testCreateListUpdateAndDeletePrincipal() {
+  public void testCreateListUpdateAndDeletePrincipal(TestInfo testInfo) {
     Principal principal =
         Principal.builder()
-            .setName(client.newEntityName("myprincipal"))
+            .setName(client.newEntityName("myprincipal", testInfo))
             .setProperties(Map.of("custom-tag", "foo"))
             .build();
     managementApi.createPrincipal(new CreatePrincipalRequest(principal, null));
@@ -1021,10 +1022,10 @@ public class PolarisManagementServiceIntegrationTest {
   }
 
   @Test
-  public void testCreateListUpdateAndDeletePrincipalRole() {
+  public void testCreateListUpdateAndDeletePrincipalRole(TestInfo testInfo) {
     PrincipalRole principalRole =
         new PrincipalRole(
-            client.newEntityName("myprincipalrole"), Map.of("custom-tag", "foo"), 0L, 0L, 1);
+            client.newEntityName("myprincipalrole", testInfo), Map.of("custom-tag", "foo"), 0L, 0L, 1);
     managementApi.createPrincipalRole(principalRole);
 
     // Second attempt to create the same entity should fail with CONFLICT.
@@ -1171,8 +1172,8 @@ public class PolarisManagementServiceIntegrationTest {
   }
 
   @Test
-  public void testCreateListUpdateAndDeleteCatalogRole() {
-    String catalogName = client.newEntityName("mycatalog1");
+  public void testCreateListUpdateAndDeleteCatalogRole(TestInfo testInfo) {
+    String catalogName = client.newEntityName("mycatalog1", testInfo);
     Catalog catalog =
         PolarisCatalog.builder()
             .setType(Catalog.TypeEnum.INTERNAL)
@@ -1184,7 +1185,7 @@ public class PolarisManagementServiceIntegrationTest {
             .build();
     managementApi.createCatalog(catalog);
 
-    String catalogName2 = client.newEntityName("mycatalog2");
+    String catalogName2 = client.newEntityName("mycatalog2", testInfo);
     Catalog catalog2 =
         PolarisCatalog.builder()
             .setType(Catalog.TypeEnum.INTERNAL)
@@ -1335,9 +1336,9 @@ public class PolarisManagementServiceIntegrationTest {
   }
 
   @Test
-  public void testAssignListAndRevokePrincipalRoles() {
+  public void testAssignListAndRevokePrincipalRoles(TestInfo testInfo) {
     // Create two Principals
-    Principal principal1 = new Principal(client.newEntityName("myprincipal1"));
+    Principal principal1 = new Principal(client.newEntityName("myprincipal1", testInfo));
     try (Response response =
         managementApi
             .request("v1/principals")
@@ -1346,7 +1347,7 @@ public class PolarisManagementServiceIntegrationTest {
       assertThat(response).returns(Response.Status.CREATED.getStatusCode(), Response::getStatus);
     }
 
-    Principal principal2 = new Principal(client.newEntityName("myprincipal2"));
+    Principal principal2 = new Principal(client.newEntityName("myprincipal2", testInfo));
     try (Response response =
         managementApi
             .request("v1/principals")
@@ -1356,7 +1357,7 @@ public class PolarisManagementServiceIntegrationTest {
     }
 
     // One PrincipalRole
-    PrincipalRole principalRole = new PrincipalRole(client.newEntityName("myprincipalrole"));
+    PrincipalRole principalRole = new PrincipalRole(client.newEntityName("myprincipalrole", testInfo));
     managementApi.createPrincipalRole(principalRole);
 
     // Assign the role to myprincipal1
@@ -1473,19 +1474,19 @@ public class PolarisManagementServiceIntegrationTest {
   }
 
   @Test
-  public void testAssignListAndRevokeCatalogRoles() {
+  public void testAssignListAndRevokeCatalogRoles(TestInfo testInfo) {
     // Create two PrincipalRoles
-    PrincipalRole principalRole1 = new PrincipalRole(client.newEntityName("mypr1"));
+    PrincipalRole principalRole1 = new PrincipalRole(client.newEntityName("mypr1", testInfo));
     managementApi.createPrincipalRole(principalRole1);
 
-    PrincipalRole principalRole2 = new PrincipalRole(client.newEntityName("mypr2"));
+    PrincipalRole principalRole2 = new PrincipalRole(client.newEntityName("mypr2", testInfo));
     managementApi.createPrincipalRole(principalRole2);
 
     // One CatalogRole
     Catalog catalog =
         PolarisCatalog.builder()
             .setType(Catalog.TypeEnum.INTERNAL)
-            .setName(client.newEntityName("mycatalog"))
+            .setName(client.newEntityName("mycatalog", testInfo))
             .setStorageConfigInfo(
                 new AwsStorageConfigInfo(
                     "arn:aws:iam::012345678901:role/jdoe", StorageConfigInfo.StorageTypeEnum.S3))
@@ -1506,7 +1507,7 @@ public class PolarisManagementServiceIntegrationTest {
     Catalog otherCatalog =
         PolarisCatalog.builder()
             .setType(Catalog.TypeEnum.INTERNAL)
-            .setName(client.newEntityName("othercatalog"))
+            .setName(client.newEntityName("othercatalog", testInfo))
             .setProperties(new CatalogProperties("s3://path/to/data"))
             .setStorageConfigInfo(
                 new AwsStorageConfigInfo(
