@@ -25,11 +25,15 @@ import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class PolarisEventEmitter {
+    @Inject EventBus eventBus;
+
     @Inject private Event<BeforeTableCommitEvent> beforeTableCommitEvent;
     // TODO: more events
 
     public void fire(BeforeTableCommitEvent event) {
         beforeTableCommitEvent.fire(event);
+
+        eventBus.publish("greeting", "test event body");
     }
 
     // TODO: more fire() methods

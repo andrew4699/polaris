@@ -19,6 +19,7 @@
 
 package org.apache.polaris.service.quarkus;
 
+import io.quarkus.vertx.ConsumeEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import org.apache.polaris.service.events.BeforeTableCommitEvent;
@@ -27,5 +28,10 @@ import org.apache.polaris.service.events.BeforeTableCommitEvent;
 public class ExamplePolarisEventListener {
     void onBeforeTableCommit(@Observes BeforeTableCommitEvent task) {
         System.out.println("Observed BeforeTableCommitEvent");
+    }
+
+    @ConsumeEvent
+    public void consume(String name) {
+        System.out.println("ANDREW consume " + name);
     }
 }

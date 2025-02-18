@@ -86,6 +86,9 @@ dependencies {
   implementation(platform(libs.azuresdk.bom))
   implementation("com.azure:azure-core")
 
+  implementation(enforcedPlatform(libs.quarkus.bom))
+  implementation("io.quarkus:quarkus-vertx")
+
   testImplementation(platform(libs.junit.bom))
   testImplementation("org.junit.jupiter:junit-jupiter")
   testImplementation(libs.assertj.core)
